@@ -1,0 +1,2055 @@
+part of 'pages.dart';
+
+class InputKelola extends StatefulWidget {
+  final String? stepke;
+  final String? laststep;
+  final String? typeInput;
+  final List<String>? jenis;
+  final String? title;
+  const InputKelola(
+      {Key? key,
+      this.stepke,
+      this.laststep,
+      this.typeInput,
+      this.jenis,
+      this.title})
+      : super(key: key);
+
+  @override
+  _InputKelolaState createState() => _InputKelolaState();
+}
+
+class _InputKelolaState extends State<InputKelola> {
+  Map<String, bool> roda2 = {
+    'Motor': false,
+    'Sepeda': false,
+    'Delman': false,
+  };
+  Map<String, bool> roda3 = {
+    'Becak': false,
+    'Bajaj': false,
+  };
+  Map<String, bool> roda4 = {
+    'Mobil': false,
+    'Bus': false,
+    'Truk': false,
+  };
+  Map<String, bool> bangunan = {
+    'Rumah': false,
+    'Kos - kosan ': false,
+    'Kontrakan': false,
+    'Apartment': false,
+    'Gudang': false,
+  };
+  Map<String, bool> paket = {
+    'Rumah': false,
+    'Kos - kosan ': false,
+    'Kontrakan': false,
+    'Apartment': false,
+  };
+
+  Map<String, bool> pickup = {
+    'Motor': false,
+    'Mobil': false,
+    'Mobil Pick Up': false,
+    'Truk': false,
+  };
+  List<String> dataKendaraan = [];
+  List<String> dataBangunan = [];
+  List<String> dataBarangItem = [];
+  List<String> dataBarangPaket = [];
+  List<String> dataKendaraanPickup = [];
+
+  var titik, provinsi, kabupaten, kecamatan;
+  var provinsicek, kabupatencek, kecamatancek;
+
+  int id = 0;
+
+  SubLayanan? layanan;
+  TextEditingController provinsiController = TextEditingController();
+  TextEditingController kabupatenController = TextEditingController();
+  TextEditingController kecamatanController = TextEditingController();
+  TextEditingController luas1Controller = TextEditingController();
+  TextEditingController luas2Controller = TextEditingController();
+  TextEditingController catatanKapasitasController = TextEditingController();
+  TextEditingController barangItemController = TextEditingController();
+
+  void _navigateLocation(BuildContext context) async {
+    titik = await Get.to(() => LocationAlamat());
+    if (titik != null) {
+      setState(() {});
+      print(titik); // call your own function here to refresh screen
+    }
+  }
+
+  void _navigateProvinsi(BuildContext context) async {
+    await context.read<PilihanalamatCubit>().showProvinsi();
+
+    provinsi = await Get.to(() => PilihAlamatPage('Provinsi'));
+    provinsicek = (provinsi == null) ? "Ex . Udin Petot" : provinsi['name'];
+    if (provinsi != null) {
+      setState(() {});
+      print(provinsi); // call your own function here to refresh screen
+    }
+  }
+
+  void _navigateKabupaten(BuildContext context) async {
+    await context.read<PilihanalamatCubit>().showKota(provinsi['key']);
+
+    kabupaten = await Get.to(() => PilihAlamatPage('Kabupaten'));
+    kabupatencek = (kabupaten == null) ? "Ex . Udin Petot" : kabupaten['name'];
+
+    if (kabupaten != null) {
+      setState(() {});
+
+      print(kabupaten); // call your own function here to refresh screen
+    }
+  }
+
+  void _navigateKecamatan(BuildContext context) async {
+    await context.read<PilihanalamatCubit>().showKecamatan(kabupaten['key']);
+
+    kecamatan = await Get.to(() => PilihAlamatPage('Kecamatan'));
+    kecamatancek = (kecamatan == null) ? "Ex . Udin Petot" : kecamatan['name'];
+    if (kecamatan != null) {
+      setState(() {});
+
+      print(kecamatan); // call your own function here to refresh screen
+    }
+  }
+
+  Map<String, dynamic>? _alamatUmum;
+  List<Map<String, dynamic>>? _values;
+  Map<String, dynamic>? _dataKendaraan;
+  Map<String, dynamic>? _ketersediaanGudang;
+
+  @override
+  void initState() {
+    super.initState();
+    _values = [];
+    print(myPickup);
+  }
+
+  List<Map>? myProducts;
+  List<Map>? myPickup;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.stepke! == widget.laststep && widget.typeInput == 'Kendaraan') {
+      myProducts = List.generate(widget.jenis!.length,
+          (index) => {"id": index, "name": widget.jenis![index]}).toList();
+    }
+    if (widget.stepke! == widget.laststep &&
+        widget.typeInput == 'Pickup' &&
+        dataKendaraanPickup.length != 0) {
+      myPickup = List.generate(dataKendaraanPickup.length,
+              (index) => {"id": index, "name": dataKendaraanPickup[index]})
+          .toList();
+    }
+    int index = 0;
+
+    return SafeArea(
+      child: Scaffold(
+        bottomNavigationBar: Container(
+          height: 11 * h,
+          color: Colors.transparent,
+          child: Center(
+            child: Container(
+              margin: EdgeInsets.fromLTRB(5 * w, 2 * h, 5 * w, 3.8 * h),
+              height: 7.5 * h,
+              width: double.infinity,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      elevation: 0, onPrimary: mainGreen2, primary: mainGreen2),
+                  onPressed: () {
+                    if (widget.typeInput == 'umum') {
+                      if (titik == null) {
+                        Get.snackbar('title', 'message');
+                      } else if (provinsi == null) {
+                        Get.snackbar('title', 'message');
+                      } else if (kabupaten == null) {
+                        Get.snackbar('title', 'message');
+                      } else if (kecamatan == null) {
+                        Get.snackbar('title', 'message');
+                      } else {
+                        _alamatUmum = {
+                          'titik': titik['titik'],
+                          'provinsi': provinsicek,
+                          'kabupaten': kabupatencek,
+                          'kecamatan': kecamatancek,
+                          'alamat': titik['alamat']
+                        };
+                        Get.back(result: _alamatUmum);
+                      }
+                    } else if (widget.stepke! == widget.laststep &&
+                        widget.typeInput == 'Kendaraan') {
+                      _dataKendaraan = {
+                        'luas_lahan': '' +
+                            luas1Controller.text +
+                            'x' +
+                            luas2Controller.text,
+                        'data': _values,
+                        'catatan': catatanKapasitasController.text,
+                      };
+                      Get.back(result: _dataKendaraan);
+                    } else if (widget.stepke! == '2' &&
+                        widget.typeInput == 'Kendaraan') {
+                      Get.back(result: dataKendaraan);
+                    } else if (widget.typeInput == 'Bangunan' &&
+                        widget.stepke! == widget.laststep) {
+                      Get.back(result: dataBangunan);
+                    } else if (widget.typeInput == 'BarangItem') {
+                      Get.back(result: dataBarangItem);
+                    } else if (widget.typeInput == 'KetersediaanGudang') {
+                      _ketersediaanGudang = {
+                        'luas_lahan': '' +
+                            luas1Controller.text +
+                            'x' +
+                            luas2Controller.text,
+                        'catatan': catatanKapasitasController.text
+                      };
+                      Get.back(result: _ketersediaanGudang);
+                    } else if (widget.typeInput == 'BarangPaket') {
+                      Get.back(result: dataBarangPaket);
+                    } else if (widget.typeInput == 'Pickup') {
+                      Get.back(result: _values);
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        (widget.stepke != '1') ? "Lanjutkan" : 'Next',
+                        style: blackFontStyle1.copyWith(
+                            fontSize: 2.6 * sp,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      SizedBox(
+                        width: 1.2 * h,
+                      ),
+                      (widget.stepke != '1')
+                          ? SizedBox()
+                          : Icon(Icons.arrow_forward_ios_outlined)
+                    ],
+                  )),
+            ),
+          ),
+        ),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              elevation: 0,
+              backgroundColor: Colors.white,
+              pinned: true,
+              automaticallyImplyLeading: false,
+              flexibleSpace: Container(
+                margin: EdgeInsets.all(2.2 * h),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.arrow_back_rounded,
+                          color: mainGreen2,
+                        ),
+                        SizedBox(width: 4 * w),
+                        Text(
+                          widget.title ?? "title",
+                          style: blackFontStyle1.copyWith(fontSize: 2 * sp),
+                        )
+                      ],
+                    ),
+                    Text(
+                      "Langkah ${widget.stepke} dari ${widget.laststep}",
+                      style: blackFontStyle1.copyWith(
+                          fontSize: 1.4 * sp, color: greycolor2),
+                    )
+                  ],
+                ),
+              ),
+            ),
+            // Input Alamat Umum
+            (widget.typeInput == 'umum')
+                ? SliverList(
+                    delegate: SliverChildListDelegate([
+                    Container(
+                        margin: EdgeInsets.symmetric(
+                            horizontal: 7 * w, vertical: 2.2 * h),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Alamat",
+                              style: blackFontStyle1.copyWith(
+                                  fontSize: 2 * sp,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(
+                              height: 1.8 * h,
+                            ),
+                            SizedBox(
+                                width: MediaQuery.of(context).size.width -
+                                    (MediaQuery.of(context).size.width / 2),
+                                child: Text(
+                                    "Isikan alamat Lahan parkir Anda di bawah sini",
+                                    style: blackFontStyle1.copyWith(
+                                        fontSize: 1.9 * sp))),
+                            Center(
+                              child: Container(
+                                height: 7 * h,
+                                margin: EdgeInsets.fromLTRB(0, 2 * h, 0, 0),
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    style: ButtonStyle(
+                                      elevation: MaterialStateProperty.all(0),
+                                      backgroundColor:
+                                          MaterialStateProperty.all<Color>(
+                                              greycolor3),
+                                      shape: MaterialStateProperty.all(
+                                          RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0))),
+                                    ),
+                                    onPressed: () async {
+                                      _navigateLocation(context);
+                                    },
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.location_on,
+                                          color: redLokasi,
+                                        ),
+                                        SizedBox(
+                                          width: 1.2 * h,
+                                        ),
+                                        Text(
+                                          "Pick your location",
+                                          style: blackFontStyle1.copyWith(
+                                              fontSize: 1.8 * sp,
+                                              color: (titik == null)
+                                                  ? Colors.black
+                                                  : mainGreen2,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    )),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 1.2 * h,
+                            ),
+                            Text("Provinsi"),
+                            SizedBox(
+                              height: h,
+                            ),
+                            InkWell(
+                              onTap: () async {
+                                _navigateProvinsi(context);
+                              },
+                              child: Container(
+                                height: 7 * h,
+                                color: Colors.grey[50],
+                                child: TextField(
+                                  enabled: false,
+                                  // controller: namaController,
+                                  style: blackFontStyle1.copyWith(
+                                      fontSize: 1.5 * sp),
+                                  decoration: InputDecoration(
+                                    hintText: provinsicek ?? "Ex . Udin Petot",
+                                    hintStyle: blackFontStyle1.copyWith(
+                                        fontSize: 1.5 * sp),
+                                    filled: true,
+                                    fillColor: greycolor3,
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(8)),
+                                      borderSide: BorderSide(
+                                          color: greycolor2, width: 2.0),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(8)),
+                                      borderSide: BorderSide(
+                                          color: greycolor1, width: 2.0),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 1.2 * h,
+                            ),
+                            Text("Kabupaten/Kota"),
+                            SizedBox(
+                              height: h,
+                            ),
+                            InkWell(
+                              onTap: () async {
+                                if (provinsi != null) {
+                                  _navigateKabupaten(context);
+                                } else {
+                                  Get.snackbar("", "",
+                                      backgroundColor: "D9435E".toColor(),
+                                      icon: Icon(
+                                        Icons.info,
+                                        color: Colors.white,
+                                      ),
+                                      titleText: Text("Warning",
+                                          style: blackFontStyle1.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600)),
+                                      messageText:
+                                          Text('Mohon Pilih Provinsi Dulu',
+                                              style: blackFontStyle1.copyWith(
+                                                color: Colors.white,
+                                              )));
+                                }
+                              },
+                              child: Container(
+                                height: 7 * h,
+                                color: Colors.grey[50],
+                                child: TextField(
+                                  enabled: false,
+                                  // controller: namaController,
+                                  style: blackFontStyle1.copyWith(
+                                      fontSize: 1.5 * sp),
+                                  decoration: InputDecoration(
+                                    hintText: kabupatencek ?? "Ex . Udin Petot",
+                                    hintStyle: blackFontStyle1.copyWith(
+                                        fontSize: 1.5 * sp),
+                                    filled: true,
+                                    fillColor: greycolor3,
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(10)),
+                                      borderSide: BorderSide(
+                                          color: greycolor2, width: 2.0),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(10)),
+                                      borderSide: BorderSide(
+                                          color: greycolor3, width: 2.0),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 1.2 * h,
+                            ),
+                            Text("Kecamatan"),
+                            SizedBox(
+                              height: h,
+                            ),
+                            InkWell(
+                              onTap: () async {
+                                if (kabupaten != null) {
+                                  _navigateKecamatan(context);
+                                } else {
+                                  Get.snackbar("", "",
+                                      backgroundColor: Colors.amber,
+                                      icon: Icon(
+                                        Icons.info,
+                                        color: Colors.white,
+                                      ),
+                                      titleText: Text("Warning",
+                                          style: blackFontStyle1.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600)),
+                                      messageText: Text(
+                                          'Mohon Pilih Kota/Kabupaten Dulu',
+                                          style: blackFontStyle1.copyWith(
+                                            color: Colors.white,
+                                          )));
+                                }
+                              },
+                              child: Container(
+                                height: 7 * h,
+                                color: Colors.grey[50],
+                                child: TextField(
+                                  enabled: false,
+                                  // controller: namaController,
+                                  style: blackFontStyle1.copyWith(
+                                      fontSize: 1.5 * sp),
+                                  decoration: InputDecoration(
+                                    hintText: kecamatancek ?? "Ex . Udin Petot",
+                                    hintStyle: blackFontStyle1.copyWith(
+                                        fontSize: 1.5 * sp),
+                                    filled: true,
+                                    fillColor: greycolor3,
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(10)),
+                                      borderSide: BorderSide(
+                                          color: greycolor2, width: 2.0),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(10)),
+                                      borderSide: BorderSide(
+                                          color: greycolor3, width: 2.0),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 1.2 * h,
+                            ),
+                            Text("Catatan Alamat"),
+                            SizedBox(
+                              height: h,
+                            ),
+                            SizedBox(
+                                width: MediaQuery.of(context).size.width -
+                                    (MediaQuery.of(context).size.width / 3),
+                                child: Text(
+                                    "Diskripsikan patokan agar lahan pakiranda mudah ditemukan (opsional)",
+                                    style: blackFontStyle1.copyWith(
+                                        fontSize: 1.4 * sp))),
+                            SizedBox(
+                              height: 2 * h,
+                            ),
+                            Container(
+                              child: TextField(
+                                minLines: 4,
+                                maxLines: 6,
+                                keyboardType: TextInputType.multiline,
+                                decoration: InputDecoration(
+                                  hintText: 'Ex',
+                                  hintStyle: blackFontStyle1.copyWith(
+                                      color: Colors.grey, fontSize: 1.5 * sp),
+                                  fillColor: greycolor3,
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10)),
+                                    borderSide: BorderSide(
+                                        color: greycolor2, width: 2.0),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10)),
+                                    borderSide: BorderSide(
+                                        color: greycolor2, width: 2.0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              height: 7 * h,
+                            ),
+                          ],
+                        ))
+                  ]))
+                : (widget.typeInput == 'Kendaraan' && widget.stepke == '2')
+                    ? SliverList(
+                        delegate: SliverChildListDelegate([
+                          Container(
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 7 * w, vertical: 2.2 * h),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Pilih Kendaraan yang ada di layanan Anda inginkan.",
+                                  style: blackFontStyle1.copyWith(
+                                      fontSize: 2 * sp,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(
+                                  height: 1.8 * h,
+                                ),
+                                SizedBox(
+                                    width: double.infinity,
+                                    child: Text(
+                                        "Silahkan centang fasilitas yang ada dan sesuai untuk lahan anda  ",
+                                        style: blackFontStyle1.copyWith(
+                                            fontSize: 1.9 * sp))),
+                                SizedBox(height: 1.2 * h),
+                                Container(
+                                  margin: EdgeInsets.all(1.2 * h),
+                                  child: Text(
+                                    "Roda 2",
+                                    style: blackFontStyle1.copyWith(
+                                        fontSize: 2 * sp,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                Column(
+                                  children: roda2.keys
+                                      .map(
+                                        (String key) => Row(
+                                          children: [
+                                            Checkbox(
+                                              value: roda2[key],
+                                              activeColor: mainGreen2,
+                                              onChanged: (bool? value) {
+                                                setState(() {
+                                                  roda2[key] = value!;
+                                                  // print(cekroda2);
+                                                  (dataKendaraan.any(
+                                                          (element) => (element
+                                                              .contains(key))))
+                                                      ? dataKendaraan
+                                                          .remove(key)
+                                                      : dataKendaraan.add(key);
+                                                  print(dataKendaraan);
+                                                });
+                                              },
+                                            ),
+                                            Text(key,
+                                                style: blackFontStyle1.copyWith(
+                                                    fontSize: 2 * sp))
+                                          ],
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                                SizedBox(height: 1.2 * h),
+                                Container(
+                                  margin: EdgeInsets.all(1.2 * h),
+                                  child: Text("Roda 3",
+                                      style: blackFontStyle1.copyWith(
+                                          fontSize: 2 * sp,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                                Column(
+                                  children: roda3.keys
+                                      .map(
+                                        (String key) => Row(
+                                          children: [
+                                            Checkbox(
+                                              value: roda3[key],
+                                              activeColor: mainGreen2,
+                                              onChanged: (bool? value) {
+                                                setState(() {
+                                                  roda3[key] = value!;
+                                                  // print(cekroda2);
+                                                  (dataKendaraan.any(
+                                                          (element) => (element
+                                                              .contains(key))))
+                                                      ? dataKendaraan
+                                                          .remove(key)
+                                                      : dataKendaraan.add(key);
+                                                  print(dataKendaraan);
+                                                });
+                                              },
+                                            ),
+                                            Text(key,
+                                                style: blackFontStyle1.copyWith(
+                                                    fontSize: 2 * sp))
+                                          ],
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                                SizedBox(height: 1.2 * h),
+                                Container(
+                                  margin: EdgeInsets.all(1.2 * h),
+                                  child: Text("Roda 4",
+                                      style: blackFontStyle1.copyWith(
+                                          fontSize: 2 * sp,
+                                          fontWeight: FontWeight.bold)),
+                                ),
+                                Column(
+                                  children: roda4.keys
+                                      .map(
+                                        (String key) => Row(
+                                          children: [
+                                            Checkbox(
+                                              value: roda4[key],
+                                              activeColor: mainGreen2,
+                                              onChanged: (bool? value) {
+                                                setState(() {
+                                                  roda4[key] = value!;
+                                                  // print(cekroda2);
+                                                  (dataKendaraan.any(
+                                                          (element) => (element
+                                                              .contains(key))))
+                                                      ? dataKendaraan
+                                                          .remove(key)
+                                                      : dataKendaraan.add(key);
+                                                  print(dataKendaraan);
+                                                });
+                                              },
+                                            ),
+                                            Text(key,
+                                                style: blackFontStyle1.copyWith(
+                                                    fontSize: 2 * sp))
+                                          ],
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ),
+                          )
+                        ]),
+                      )
+                    : ((widget.typeInput == 'Kendaraan' &&
+                            widget.stepke == widget.laststep)
+                        ? SliverList(
+                            delegate: SliverChildListDelegate([
+                            Container(
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: 7 * w, vertical: 2.2 * h),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Ketersediaan Lahan Parkiran",
+                                    style: blackFontStyle1.copyWith(
+                                        fontSize: 2 * sp,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(
+                                    height: 1.8 * h,
+                                  ),
+                                  SizedBox(
+                                      width: double.infinity,
+                                      child: Text(
+                                          "Mohon masukan jumlah kapasitas dan luas Lahan Parkiran anda",
+                                          style: blackFontStyle1.copyWith(
+                                              fontSize: 1.9 * sp))),
+                                  SizedBox(height: 1.2 * h),
+                                  Container(
+                                    margin: EdgeInsets.all(1.2 * h),
+                                    child: Text(
+                                      "Berapa Luas lahan ?",
+                                      style: blackFontStyle1.copyWith(
+                                          fontSize: 2 * sp,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: EdgeInsets.only(
+                                        left: 1.2 * h, bottom: 2.1 * h),
+                                    child: Text(
+                                      "Ukuran luas lahan anda ",
+                                      style: blackFontStyle1.copyWith(
+                                          fontSize: 1.2 * sp),
+                                    ),
+                                  ),
+                                  Container(
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                            padding: EdgeInsets.all(3),
+                                            height: 5 * h,
+                                            width: 20 * w,
+                                            decoration: BoxDecoration(
+                                              // ignore: prefer_const_constructors
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(8)),
+                                              border: Border.all(
+                                                  color: greycolor2,
+                                                  width: 2.0),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  padding: EdgeInsets.only(
+                                                      top: 3 * w),
+                                                  width: 12 * w,
+                                                  child: TextField(
+                                                    minLines: 1,
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    style: blackFontStyle1
+                                                        .copyWith(
+                                                            fontSize: 1.5 * sp),
+                                                    textAlign: TextAlign.center,
+                                                    controller: luas1Controller,
+                                                    decoration: InputDecoration(
+                                                      hintText: "0",
+                                                      border: InputBorder.none,
+                                                      focusedBorder:
+                                                          InputBorder.none,
+                                                      enabledBorder:
+                                                          InputBorder.none,
+                                                      errorBorder:
+                                                          InputBorder.none,
+                                                      disabledBorder:
+                                                          InputBorder.none,
+                                                      hintStyle: blackFontStyle1
+                                                          .copyWith(
+                                                              fontSize:
+                                                                  1.5 * sp),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  width: 3 * w,
+                                                  child: Center(
+                                                    child: Text("m",
+                                                        style: blackFontStyle1
+                                                            .copyWith(
+                                                                fontSize:
+                                                                    1.5 * sp)),
+                                                  ),
+                                                ),
+                                              ],
+                                            )),
+                                        SizedBox(
+                                          width: 3 * w,
+                                        ),
+                                        Text("X"),
+                                        SizedBox(
+                                          width: 3 * w,
+                                        ),
+                                        Container(
+                                            padding: EdgeInsets.all(3),
+                                            height: 5 * h,
+                                            width: 20 * w,
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(8)),
+                                              border: Border.all(
+                                                  color: greycolor2,
+                                                  width: 2.0),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  padding: EdgeInsets.only(
+                                                      top: 3 * w),
+                                                  width: 12 * w,
+                                                  child: TextField(
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    minLines: 1,
+                                                    style: blackFontStyle1
+                                                        .copyWith(
+                                                            fontSize: 1.5 * sp),
+                                                    textAlign: TextAlign.center,
+                                                    controller: luas2Controller,
+                                                    decoration: InputDecoration(
+                                                      hintText: "0",
+                                                      border: InputBorder.none,
+                                                      focusedBorder:
+                                                          InputBorder.none,
+                                                      enabledBorder:
+                                                          InputBorder.none,
+                                                      errorBorder:
+                                                          InputBorder.none,
+                                                      disabledBorder:
+                                                          InputBorder.none,
+                                                      hintStyle: blackFontStyle1
+                                                          .copyWith(
+                                                              fontSize:
+                                                                  1.5 * sp),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  width: 3 * w,
+                                                  child: Center(
+                                                    child: Text("m",
+                                                        style: blackFontStyle1
+                                                            .copyWith(
+                                                                fontSize:
+                                                                    1.5 * sp)),
+                                                  ),
+                                                ),
+                                              ],
+                                            )),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 2.5 * h,
+                                  ),
+                                  ListView.builder(
+                                      primary: false,
+                                      scrollDirection: Axis.vertical,
+                                      shrinkWrap: true,
+                                      itemCount: myProducts!.length,
+                                      itemBuilder: (BuildContext ctx, index) {
+                                        return Container(
+                                          width: double.infinity,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                  "Berapa total ${myProducts![index]["name"]} bisa masuk ?",
+                                                  style:
+                                                      blackFontStyle1.copyWith(
+                                                          fontSize: 2 * sp,
+                                                          fontWeight:
+                                                              FontWeight.bold)),
+                                              SizedBox(
+                                                height: h,
+                                              ),
+                                              Text(
+                                                "total ${myProducts![index]["name"]} bisa masuk",
+                                                style: blackFontStyle1.copyWith(
+                                                    fontSize: 1.2 * sp),
+                                              ),
+                                              SizedBox(
+                                                height: h,
+                                              ),
+                                              Container(
+                                                height: 7 * h,
+                                                color: Colors.grey[50],
+                                                child: TextField(
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  onChanged: (val) {
+                                                    _input(
+                                                        myProducts![index]
+                                                            ["name"],
+                                                        index,
+                                                        val);
+                                                  },
+                                                  style:
+                                                      blackFontStyle1.copyWith(
+                                                          fontSize: 1.5 * sp),
+                                                  decoration: InputDecoration(
+                                                    hintText: "Ex . 0",
+                                                    hintStyle: blackFontStyle1
+                                                        .copyWith(
+                                                            fontSize: 1.5 * sp),
+                                                    filled: true,
+                                                    fillColor: greycolor3,
+                                                    focusedBorder:
+                                                        OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  10)),
+                                                      borderSide: BorderSide(
+                                                          color: greycolor2,
+                                                          width: 2.0),
+                                                    ),
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.all(
+                                                              Radius.circular(
+                                                                  10)),
+                                                      borderSide: BorderSide(
+                                                          color: greycolor3,
+                                                          width: 2.0),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: h,
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        ;
+                                      }),
+                                  Container(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Catatan Kapsitas",
+                                            style: blackFontStyle1.copyWith(
+                                                fontSize: 2 * sp,
+                                                fontWeight: FontWeight.bold)),
+                                        SizedBox(
+                                          height: h,
+                                        ),
+                                        SizedBox(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width -
+                                              (MediaQuery.of(context)
+                                                      .size
+                                                      .width /
+                                                  3),
+                                          child: Text(
+                                            "Diskripsikan berapa kendaraan yang bisa masuk kelahan parkir anda ",
+                                            style: blackFontStyle1.copyWith(
+                                                fontSize: 1.5 * sp),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: h,
+                                        ),
+                                        Container(
+                                          color: Colors.grey[50],
+                                          child: TextField(
+                                            minLines: 4,
+                                            maxLines: 6,
+                                            keyboardType:
+                                                TextInputType.multiline,
+                                            controller:
+                                                catatanKapasitasController,
+                                            style: blackFontStyle1.copyWith(
+                                                fontSize: 1.5 * sp),
+                                            decoration: InputDecoration(
+                                              hintText: kabupaten ??
+                                                  "Ex. becak bisa masuk juga kok ",
+                                              hintStyle: blackFontStyle1
+                                                  .copyWith(fontSize: 1.5 * sp),
+                                              filled: true,
+                                              fillColor: greycolor3,
+                                              focusedBorder: OutlineInputBorder(
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(10)),
+                                                borderSide: BorderSide(
+                                                    color: greycolor2,
+                                                    width: 2.0),
+                                              ),
+                                              enabledBorder: OutlineInputBorder(
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(10)),
+                                                borderSide: BorderSide(
+                                                    color: greycolor3,
+                                                    width: 2.0),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          height: h,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ]))
+                        : (widget.typeInput == 'Bangunan' &&
+                                widget.stepke == widget.laststep)
+                            ? SliverList(
+                                delegate: SliverChildListDelegate([
+                                Container(
+                                  margin: EdgeInsets.symmetric(
+                                      horizontal: 7 * w, vertical: 2.2 * h),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Pilih bangunan yang ada dilayanan Anda inginkan",
+                                        style: blackFontStyle1.copyWith(
+                                            fontSize: 2 * sp,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      SizedBox(
+                                        height: 1.8 * h,
+                                      ),
+                                      SizedBox(
+                                          width: double.infinity,
+                                          child: Text(
+                                              "Silahkan centang jenis bangunan yang anda sediakan",
+                                              style: blackFontStyle1.copyWith(
+                                                  fontSize: 1.9 * sp))),
+                                      SizedBox(height: 1.2 * h),
+                                      Container(
+                                        margin: EdgeInsets.all(1.2 * h),
+                                        child: Text(
+                                          "Bangunan",
+                                          style: blackFontStyle1.copyWith(
+                                              fontSize: 2 * sp,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      Column(
+                                        children: bangunan.keys
+                                            .map(
+                                              (String key) => Row(
+                                                children: [
+                                                  Checkbox(
+                                                    value: bangunan[key],
+                                                    activeColor: mainGreen2,
+                                                    onChanged: (bool? value) {
+                                                      setState(() {
+                                                        bangunan[key] = value!;
+                                                        // print(cekroda2);
+                                                        (dataBangunan.any(
+                                                                (element) => (element
+                                                                    .contains(
+                                                                        key))))
+                                                            ? dataBangunan
+                                                                .remove(key)
+                                                            : dataBangunan
+                                                                .add(key);
+                                                        print(dataBangunan);
+                                                      });
+                                                    },
+                                                  ),
+                                                  Text(key,
+                                                      style: blackFontStyle1
+                                                          .copyWith(
+                                                              fontSize: 2 * sp))
+                                                ],
+                                              ),
+                                            )
+                                            .toList(),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ]))
+                            : (widget.typeInput == 'BarangItem' &&
+                                    widget.stepke == '2')
+                                ? SliverList(
+                                    delegate: SliverChildListDelegate([
+                                    Container(
+                                      margin: EdgeInsets.symmetric(
+                                          horizontal: 7 * w, vertical: 2.2 * h),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Masukan barang yang tersedia di layanan Anda.",
+                                            style: blackFontStyle1.copyWith(
+                                                fontSize: 2 * sp,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          SizedBox(
+                                            height: 1.8 * h,
+                                          ),
+                                          SizedBox(
+                                              width: double.infinity,
+                                              child: Text(
+                                                  "Silahkan centang barang yang ada dan sesuai untuk lahan anda  ",
+                                                  style:
+                                                      blackFontStyle1.copyWith(
+                                                          fontSize: 1.9 * sp))),
+                                          SizedBox(height: 1.2 * h),
+                                          Container(
+                                            margin: EdgeInsets.symmetric(
+                                                horizontal: 2.2 * w),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width /
+                                                      2,
+                                                  child: Text(
+                                                    "Masukan barang yang anda inginkan",
+                                                    style: blackFontStyle1
+                                                        .copyWith(
+                                                            fontSize: 1.6 * sp,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  height: 2 * h,
+                                                ),
+                                                Container(
+                                                  margin: EdgeInsets.symmetric(
+                                                      horizontal: 0),
+                                                  height: 7 * h,
+                                                  color: Colors.grey[50],
+                                                  child: TextField(
+                                                    controller:
+                                                        barangItemController,
+                                                    style: blackFontStyle1
+                                                        .copyWith(
+                                                            fontSize: 1.5 * sp),
+                                                    decoration: InputDecoration(
+                                                      hintText: "Ex . Kacamata",
+                                                      hintStyle: blackFontStyle1
+                                                          .copyWith(
+                                                              fontSize:
+                                                                  1.5 * sp),
+                                                      filled: true,
+                                                      fillColor: Colors.white,
+                                                      focusedBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                                Radius.circular(
+                                                                    8)),
+                                                        borderSide: BorderSide(
+                                                            color: greycolor2,
+                                                            width: 2.0),
+                                                      ),
+                                                      enabledBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                                Radius.circular(
+                                                                    8)),
+                                                        borderSide: BorderSide(
+                                                            color: greycolor1,
+                                                            width: 2.0),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Container(
+                                                  width: double.infinity,
+                                                  margin: EdgeInsets.fromLTRB(
+                                                      .2 * w,
+                                                      2 * h,
+                                                      .2 * w,
+                                                      2.5 * h),
+                                                  height: 4.5 * h,
+                                                  child: ElevatedButton(
+                                                      onPressed: () {
+                                                        dataBarangItem.add(
+                                                            barangItemController
+                                                                .text);
+                                                        setState(() {});
+                                                        barangItemController
+                                                            .text = '';
+                                                        print(dataBarangItem);
+                                                      },
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                              elevation: 0,
+                                                              onPrimary:
+                                                                  mainGreen2,
+                                                              primary:
+                                                                  mainGreen2),
+                                                      child: Text(
+                                                        "Masukan",
+                                                        style: blackFontStyle1
+                                                            .copyWith(
+                                                                fontSize:
+                                                                    1.8 * sp,
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                      )),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Column(
+                                            children: [
+                                              Container(
+                                                  child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Container(
+                                                      padding: EdgeInsets.all(
+                                                          1.2 * w),
+                                                      child: Text("Barang",
+                                                          style: blackFontStyle1
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      1.7 * sp,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600))),
+                                                  SizedBox(
+                                                    height: 2 * h,
+                                                  ),
+                                                  Column(
+                                                      children: dataBarangItem
+                                                          .map(
+                                                            (e) => Container(
+                                                              margin: EdgeInsets
+                                                                  .all(5),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .fromLTRB(
+                                                                          6 * w,
+                                                                          h,
+                                                                          3.3 *
+                                                                              w,
+                                                                          h),
+                                                              decoration: BoxDecoration(
+                                                                  border: Border
+                                                                      .all(
+                                                                          color:
+                                                                              mainGreen2),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              10),
+                                                                  color: Colors
+                                                                      .white),
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                children: [
+                                                                  Text(
+                                                                    e,
+                                                                    style: blackFontStyle1.copyWith(
+                                                                        fontSize:
+                                                                            1.4 *
+                                                                                sp,
+                                                                        fontWeight:
+                                                                            FontWeight
+                                                                                .bold,
+                                                                        color:
+                                                                            mainGreen2),
+                                                                  ),
+                                                                  SizedBox(
+                                                                    width:
+                                                                        2 * w,
+                                                                  ),
+                                                                  Row(
+                                                                    children: [
+                                                                      SizedBox(
+                                                                        width:
+                                                                            4 * w,
+                                                                      ),
+                                                                      Text(
+                                                                        '|',
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                20,
+                                                                            color:
+                                                                                Color(0xFFE0E0E0)),
+                                                                      ),
+                                                                      InkWell(
+                                                                          onTap:
+                                                                              () {
+                                                                            dataBarangItem.remove(e);
+                                                                            setState(() {});
+                                                                          },
+                                                                          child: Icon(
+                                                                              Icons.close,
+                                                                              color: Color(0xFFE0E0E0)))
+                                                                    ],
+                                                                  )
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          )
+                                                          .toList())
+                                                ],
+                                              )),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ]))
+                                : (widget.typeInput == 'KetersediaanGudang')
+                                    ? SliverList(
+                                        delegate: SliverChildListDelegate([
+                                        Container(
+                                          margin: EdgeInsets.symmetric(
+                                              horizontal: 7 * w,
+                                              vertical: 2.2 * h),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "Ketersediaan Lahan Gudang",
+                                                style: blackFontStyle1.copyWith(
+                                                    fontSize: 2 * sp,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              SizedBox(
+                                                height: 1.8 * h,
+                                              ),
+                                              SizedBox(
+                                                  width: double.infinity,
+                                                  child: Text(
+                                                      "Mohon masukan jumlah kapasitas dan luas gudang anda",
+                                                      style: blackFontStyle1
+                                                          .copyWith(
+                                                              fontSize:
+                                                                  1.9 * sp))),
+                                              SizedBox(height: 1.2 * h),
+                                              Container(
+                                                margin: EdgeInsets.all(1.2 * h),
+                                                child: Text(
+                                                  "Berapa Luas Gudang ?",
+                                                  style:
+                                                      blackFontStyle1.copyWith(
+                                                          fontSize: 2 * sp,
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                ),
+                                              ),
+                                              Container(
+                                                margin: EdgeInsets.only(
+                                                    left: 1.2 * h,
+                                                    bottom: 2.1 * h),
+                                                child: Text(
+                                                  "Ukuran luas gudang anda ",
+                                                  style:
+                                                      blackFontStyle1.copyWith(
+                                                          fontSize: 1.2 * sp),
+                                                ),
+                                              ),
+                                              Container(
+                                                child: Row(
+                                                  children: [
+                                                    Container(
+                                                        padding:
+                                                            EdgeInsets.all(3),
+                                                        height: 5 * h,
+                                                        width: 20 * w,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          // ignore: prefer_const_constructors
+                                                          borderRadius:
+                                                              BorderRadius.all(
+                                                                  Radius
+                                                                      .circular(
+                                                                          8)),
+                                                          border: Border.all(
+                                                              color: greycolor2,
+                                                              width: 2.0),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            Container(
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      top: 3 *
+                                                                          w),
+                                                              width: 12 * w,
+                                                              child: TextField(
+                                                                minLines: 1,
+                                                                keyboardType:
+                                                                    TextInputType
+                                                                        .number,
+                                                                style: blackFontStyle1
+                                                                    .copyWith(
+                                                                        fontSize:
+                                                                            1.5 *
+                                                                                sp),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                controller:
+                                                                    luas1Controller,
+                                                                decoration:
+                                                                    InputDecoration(
+                                                                  hintText: "0",
+                                                                  border:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  focusedBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  enabledBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  errorBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  disabledBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  hintStyle: blackFontStyle1
+                                                                      .copyWith(
+                                                                          fontSize:
+                                                                              1.5 * sp),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            Container(
+                                                              width: 3 * w,
+                                                              child: Center(
+                                                                child: Text("m",
+                                                                    style: blackFontStyle1.copyWith(
+                                                                        fontSize:
+                                                                            1.5 *
+                                                                                sp)),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )),
+                                                    SizedBox(
+                                                      width: 3 * w,
+                                                    ),
+                                                    Text("X"),
+                                                    SizedBox(
+                                                      width: 3 * w,
+                                                    ),
+                                                    Container(
+                                                        padding:
+                                                            EdgeInsets.all(3),
+                                                        height: 5 * h,
+                                                        width: 20 * w,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius.all(
+                                                                  Radius
+                                                                      .circular(
+                                                                          8)),
+                                                          border: Border.all(
+                                                              color: greycolor2,
+                                                              width: 2.0),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            Container(
+                                                              padding: EdgeInsets
+                                                                  .only(
+                                                                      top: 3 *
+                                                                          w),
+                                                              width: 12 * w,
+                                                              child: TextField(
+                                                                keyboardType:
+                                                                    TextInputType
+                                                                        .number,
+                                                                minLines: 1,
+                                                                style: blackFontStyle1
+                                                                    .copyWith(
+                                                                        fontSize:
+                                                                            1.5 *
+                                                                                sp),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                controller:
+                                                                    luas2Controller,
+                                                                decoration:
+                                                                    InputDecoration(
+                                                                  hintText: "0",
+                                                                  border:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  focusedBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  enabledBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  errorBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  disabledBorder:
+                                                                      InputBorder
+                                                                          .none,
+                                                                  hintStyle: blackFontStyle1
+                                                                      .copyWith(
+                                                                          fontSize:
+                                                                              1.5 * sp),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            Container(
+                                                              width: 3 * w,
+                                                              child: Center(
+                                                                child: Text("m",
+                                                                    style: blackFontStyle1.copyWith(
+                                                                        fontSize:
+                                                                            1.5 *
+                                                                                sp)),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )),
+                                                  ],
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: 6 * h,
+                                              ),
+                                              Container(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text("Catatan Kapsitas",
+                                                        style: blackFontStyle1
+                                                            .copyWith(
+                                                                fontSize:
+                                                                    2 * sp,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold)),
+                                                    SizedBox(
+                                                      height: h,
+                                                    ),
+                                                    SizedBox(
+                                                      width: MediaQuery.of(
+                                                                  context)
+                                                              .size
+                                                              .width -
+                                                          (MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width /
+                                                              3),
+                                                      child: Text(
+                                                        "Deskripsikan berapa banyak barang yang bisa masuk gudang anda ",
+                                                        style: blackFontStyle1
+                                                            .copyWith(
+                                                                fontSize:
+                                                                    1.5 * sp),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      height: h,
+                                                    ),
+                                                    Container(
+                                                      color: Colors.grey[50],
+                                                      child: TextField(
+                                                        minLines: 4,
+                                                        maxLines: 6,
+                                                        keyboardType:
+                                                            TextInputType
+                                                                .multiline,
+                                                        controller:
+                                                            catatanKapasitasController,
+                                                        style: blackFontStyle1
+                                                            .copyWith(
+                                                                fontSize:
+                                                                    1.5 * sp),
+                                                        decoration:
+                                                            InputDecoration(
+                                                          hintText: kabupaten ??
+                                                              "Ex. sekitar 100 barang  ",
+                                                          hintStyle:
+                                                              blackFontStyle1
+                                                                  .copyWith(
+                                                                      fontSize:
+                                                                          1.5 *
+                                                                              sp),
+                                                          filled: true,
+                                                          fillColor: greycolor3,
+                                                          focusedBorder:
+                                                              OutlineInputBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .all(Radius
+                                                                        .circular(
+                                                                            10)),
+                                                            borderSide: BorderSide(
+                                                                color:
+                                                                    greycolor2,
+                                                                width: 2.0),
+                                                          ),
+                                                          enabledBorder:
+                                                              OutlineInputBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .all(Radius
+                                                                        .circular(
+                                                                            10)),
+                                                            borderSide: BorderSide(
+                                                                color:
+                                                                    greycolor3,
+                                                                width: 2.0),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      height: h,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ]))
+                                    : (widget.typeInput == 'BarangPaket')
+                                        ? SliverList(
+                                            delegate: SliverChildListDelegate([
+                                            Container(
+                                              margin: EdgeInsets.symmetric(
+                                                  horizontal: 7 * w,
+                                                  vertical: 2.2 * h),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Pilih paket yang anda inginkan berada di layanan anda.",
+                                                    style: blackFontStyle1
+                                                        .copyWith(
+                                                            fontSize: 2 * sp,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 1.8 * h,
+                                                  ),
+                                                  SizedBox(
+                                                      width: double.infinity,
+                                                      child: Text(
+                                                          "Silahkan centang jenis paket barang yang anda sediakan",
+                                                          style: blackFontStyle1
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      1.9 *
+                                                                          sp))),
+                                                  SizedBox(height: 1.2 * h),
+                                                  Container(
+                                                    margin:
+                                                        EdgeInsets.all(1.2 * h),
+                                                    child: Text(
+                                                      "Paket",
+                                                      style: blackFontStyle1
+                                                          .copyWith(
+                                                              fontSize: 2 * sp,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                    ),
+                                                  ),
+                                                  Column(
+                                                    children: paket.keys
+                                                        .map(
+                                                          (String key) => Row(
+                                                            children: [
+                                                              Checkbox(
+                                                                value:
+                                                                    paket[key],
+                                                                activeColor:
+                                                                    mainGreen2,
+                                                                onChanged:
+                                                                    (bool?
+                                                                        value) {
+                                                                  setState(() {
+                                                                    paket[key] =
+                                                                        value!;
+                                                                    // print(cekroda2);
+                                                                    (dataBarangPaket.any((element) =>
+                                                                            (element.contains(
+                                                                                key))))
+                                                                        ? dataBarangPaket.remove(
+                                                                            key)
+                                                                        : dataBarangPaket
+                                                                            .add(key);
+                                                                    print(
+                                                                        dataBarangPaket);
+                                                                  });
+                                                                },
+                                                              ),
+                                                              Text(key,
+                                                                  style: blackFontStyle1
+                                                                      .copyWith(
+                                                                          fontSize:
+                                                                              2 * sp))
+                                                            ],
+                                                          ),
+                                                        )
+                                                        .toList(),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          ]))
+                                        : (widget.typeInput == 'Pickup' &&
+                                                widget.stepke ==
+                                                    widget.laststep)
+                                            ? SliverList(
+                                                delegate:
+                                                    SliverChildListDelegate([
+                                                Container(
+                                                  margin: EdgeInsets.symmetric(
+                                                      horizontal: 7 * w,
+                                                      vertical: 2.2 * h),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        "Pilih kendaraan yang anda\nsediakan",
+                                                        style: blackFontStyle1
+                                                            .copyWith(
+                                                                fontSize:
+                                                                    2 * sp,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold),
+                                                      ),
+                                                      SizedBox(
+                                                        height: 1.8 * h,
+                                                      ),
+                                                      Container(
+                                                        margin: EdgeInsets.only(
+                                                            bottom: 2.1 * h),
+                                                        child: Text(
+                                                          "Silahkan centang fasilitas yang ada dan\nsesuai.",
+                                                          style: blackFontStyle1
+                                                              .copyWith(
+                                                                  fontSize:
+                                                                      1.6 * sp,
+                                                                  color:
+                                                                      greycolor2),
+                                                        ),
+                                                      ),
+                                                      Column(
+                                                        children: pickup.keys
+                                                            .map(
+                                                              (String key) =>
+                                                                  Row(
+                                                                children: [
+                                                                  Checkbox(
+                                                                    value:
+                                                                        pickup[
+                                                                            key],
+                                                                    activeColor:
+                                                                        mainGreen2,
+                                                                    onChanged:
+                                                                        (bool?
+                                                                            value) {
+                                                                      setState(
+                                                                          () {
+                                                                        pickup[key] =
+                                                                            value!;
+                                                                        // print(cekroda2);
+                                                                        (dataKendaraanPickup.any((element) =>
+                                                                                (element.contains(key))))
+                                                                            ? dataKendaraanPickup.remove(key)
+                                                                            : dataKendaraanPickup.add(key);
+                                                                        print(
+                                                                            dataKendaraanPickup);
+                                                                      });
+                                                                    },
+                                                                  ),
+                                                                  Text(key,
+                                                                      style: blackFontStyle1.copyWith(
+                                                                          fontSize:
+                                                                              1.6 * sp))
+                                                                ],
+                                                              ),
+                                                            )
+                                                            .toList(),
+                                                      ),
+                                                      SizedBox(
+                                                        height: 2.5 * h,
+                                                      ),
+                                                      (dataKendaraanPickup
+                                                              .isEmpty)
+                                                          ? SizedBox()
+                                                          : ListView.builder(
+                                                              primary: false,
+                                                              scrollDirection:
+                                                                  Axis.vertical,
+                                                              shrinkWrap: true,
+                                                              itemCount:
+                                                                  myPickup!
+                                                                      .length,
+                                                              itemBuilder:
+                                                                  (BuildContext
+                                                                          ctx,
+                                                                      index) {
+                                                                print(myPickup!
+                                                                    .length
+                                                                    .toString());
+                                                                // Masih Error Saat CheckBox Kosong
+                                                                return Container(
+                                                                  width: double
+                                                                      .infinity,
+                                                                  child: Column(
+                                                                    crossAxisAlignment:
+                                                                        CrossAxisAlignment
+                                                                            .start,
+                                                                    children: [
+                                                                      Text(
+                                                                          "Berapa total ${myPickup![index]["name"]} bisa masuk ?",
+                                                                          style: blackFontStyle1.copyWith(
+                                                                              fontSize: 2 * sp,
+                                                                              fontWeight: FontWeight.bold)),
+                                                                      SizedBox(
+                                                                        height:
+                                                                            h,
+                                                                      ),
+                                                                      Text(
+                                                                        "total ${myPickup![index]["name"]} bisa masuk",
+                                                                        style: blackFontStyle1.copyWith(
+                                                                            fontSize:
+                                                                                1.2 * sp),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        height:
+                                                                            h,
+                                                                      ),
+                                                                      Container(
+                                                                        height:
+                                                                            7 * h,
+                                                                        color: Colors
+                                                                            .grey[50],
+                                                                        child:
+                                                                            TextField(
+                                                                          keyboardType:
+                                                                              TextInputType.number,
+                                                                          onChanged:
+                                                                              (val) {
+                                                                            _input(
+                                                                                myPickup![index]["name"],
+                                                                                index,
+                                                                                val);
+                                                                          },
+                                                                          style:
+                                                                              blackFontStyle1.copyWith(fontSize: 1.5 * sp),
+                                                                          decoration:
+                                                                              InputDecoration(
+                                                                            hintText:
+                                                                                "Ex . 0",
+                                                                            hintStyle:
+                                                                                blackFontStyle1.copyWith(fontSize: 1.5 * sp),
+                                                                            filled:
+                                                                                true,
+                                                                            fillColor:
+                                                                                greycolor3,
+                                                                            focusedBorder:
+                                                                                OutlineInputBorder(
+                                                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                                                              borderSide: BorderSide(color: greycolor2, width: 2.0),
+                                                                            ),
+                                                                            enabledBorder:
+                                                                                OutlineInputBorder(
+                                                                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                                                                              borderSide: BorderSide(color: greycolor3, width: 2.0),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        height:
+                                                                            h,
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                                ;
+                                                              }),
+                                                      Container(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                                "Catatan Kapsitas",
+                                                                style: blackFontStyle1.copyWith(
+                                                                    fontSize:
+                                                                        2 * sp,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)),
+                                                            SizedBox(
+                                                              height: h,
+                                                            ),
+                                                            SizedBox(
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width -
+                                                                  (MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width /
+                                                                      3),
+                                                              child: Text(
+                                                                "Diskripsikan berapa kendaraan yang bisa masuk kelahan parkir anda ",
+                                                                style: blackFontStyle1
+                                                                    .copyWith(
+                                                                        fontSize:
+                                                                            1.5 *
+                                                                                sp),
+                                                              ),
+                                                            ),
+                                                            SizedBox(
+                                                              height: h,
+                                                            ),
+                                                            Container(
+                                                              color: Colors
+                                                                  .grey[50],
+                                                              child: TextField(
+                                                                minLines: 4,
+                                                                maxLines: 6,
+                                                                keyboardType:
+                                                                    TextInputType
+                                                                        .multiline,
+                                                                controller:
+                                                                    catatanKapasitasController,
+                                                                style: blackFontStyle1
+                                                                    .copyWith(
+                                                                        fontSize:
+                                                                            1.5 *
+                                                                                sp),
+                                                                decoration:
+                                                                    InputDecoration(
+                                                                  hintText:
+                                                                      kabupaten ??
+                                                                          "Ex. becak bisa masuk juga kok ",
+                                                                  hintStyle: blackFontStyle1
+                                                                      .copyWith(
+                                                                          fontSize:
+                                                                              1.5 * sp),
+                                                                  filled: true,
+                                                                  fillColor:
+                                                                      greycolor3,
+                                                                  focusedBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.all(
+                                                                            Radius.circular(10)),
+                                                                    borderSide: BorderSide(
+                                                                        color:
+                                                                            greycolor2,
+                                                                        width:
+                                                                            2.0),
+                                                                  ),
+                                                                  enabledBorder:
+                                                                      OutlineInputBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius.all(
+                                                                            Radius.circular(10)),
+                                                                    borderSide: BorderSide(
+                                                                        color:
+                                                                            greycolor3,
+                                                                        width:
+                                                                            2.0),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            SizedBox(
+                                                              height: h,
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                              ]))
+                                            : SizedBox())
+          ],
+        ),
+      ),
+    );
+  }
+
+  _input(String e, int i, String val) {
+    int foundKey = -1;
+    for (var map in _values!) {
+      if (map.containsKey('index')) {
+        foundKey = i;
+        break;
+      }
+    }
+    if (-1 != foundKey) {
+      _values!.removeWhere((map) {
+        return map['index'] == foundKey;
+      });
+    }
+    Map<String, dynamic> json = {'index': i, 'key': e, 'value': val};
+    _values!.add(json);
+    setState(() {
+      print(_values);
+    });
+  }
+}
